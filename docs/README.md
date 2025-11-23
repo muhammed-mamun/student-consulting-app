@@ -247,7 +247,7 @@ We would like to express our heartfelt gratitude to:
 
 For questions or support, please contact:
 - **Project Leader**: Mamun Hossain
-- **Email**: [your-email@example.com]
+- **Email**: [muhammed.mamun.131@gmail.com]
 - **University**: Khwaja Yunus Ali University
 
 ---
