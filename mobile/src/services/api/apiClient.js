@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // For Android emulator, use 10.0.2.2 to access localhost
 // For physical device, use your computer's IP address
-const baseURL = 'http://10.0.2.2:3000/api';
-
+// const baseURL = 'http://10.0.2.2:3000/api';
+const baseURL = process.env.API_BASE_URL || 'https://student-consulting-app.vercel.app/api';
 const apiClient = axios.create({
   baseURL: baseURL,
   headers: {
