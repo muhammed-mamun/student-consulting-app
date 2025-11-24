@@ -1,12 +1,13 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // CHANGE 1: Remove 'getAuth' from here. We don't want the default one.
-import { onAuthStateChanged } from 'firebase/auth'; 
+import { onAuthStateChanged } from 'firebase/auth';
 
 // CHANGE 2: Import the specific 'auth' we configured in your firebase.js file
 // Note: You might need to adjust '../firebase' depending on where that file is. 
 import { auth } from '../config/firebase';
 import { login, register, logout as logoutService, getCurrentUser } from '../services/api/authService';
+import { initializePushNotifications } from '../services/notificationService';
 
 const AuthContext = createContext({});
 
@@ -28,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // CHANGE 3: Deleted "const auth = getAuth();"
       // We don't need to create it anymore because we imported it at the top!
-      
+
       // CHANGE 4: Pass our imported 'auth' variable here
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
@@ -38,6 +39,11 @@ export const AuthProvider = ({ children }) => {
               const userData = await getCurrentUser();
               setUser(userData.data);
               setToken(storedToken);
+
+              // Initialize push notifications for existing session
+              initializePushNotifications().catch(err =>
+                console.log('Push notification init failed (non-fatal):', err)
+              );
             } catch (error) {
               console.error('Error getting user data:', error);
               await AsyncStorage.removeItem('authToken');
@@ -62,12 +68,18 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (email, password) => {
     try {
       const result = await login(email, password);
-      
+
       if (result.success && result.data) {
         // Store token
         await AsyncStorage.setItem('authToken', result.data.token);
         setToken(result.data.token);
         setUser(result.data.user);
+
+        // Initialize push notifications after login
+        initializePushNotifications().catch(err =>
+          console.log('Push notification init failed (non-fatal):', err)
+        );
+
         return result;
       } else {
         throw new Error(result.message || 'Login failed');
@@ -77,16 +89,22 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
-  
+
   const registerUser = async (userData) => {
     try {
       const result = await register(userData);
-      
+
       if (result.success && result.data) {
         // Store token
         await AsyncStorage.setItem('authToken', result.data.token);
         setToken(result.data.token);
         setUser(result.data.user);
+
+        // Initialize push notifications after registration
+        initializePushNotifications().catch(err =>
+          console.log('Push notification init failed (non-fatal):', err)
+        );
+
         return result;
       } else {
         throw new Error(result.message || 'Registration failed');

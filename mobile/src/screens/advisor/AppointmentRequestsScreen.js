@@ -63,7 +63,12 @@ const AppointmentRequestsScreen = ({ navigation }) => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString('en-US', {
+      timeZone: 'Asia/Dhaka',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const formatTime = (timeString) => {
@@ -89,7 +94,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         <Text style={styles(theme).categoryText}>📋 {item.issueCategory}</Text>
       </View>
       <Text style={styles(theme).description}>{item.issueDescription}</Text>
-      
+
       <View style={styles(theme).actions}>
         <TouchableOpacity
           style={[styles(theme).button, styles(theme).approveButton]}

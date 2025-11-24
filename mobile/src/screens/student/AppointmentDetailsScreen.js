@@ -77,7 +77,8 @@ const AppointmentDetailsScreen = ({ route, navigation }) => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
+      timeZone: 'Asia/Dhaka',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
