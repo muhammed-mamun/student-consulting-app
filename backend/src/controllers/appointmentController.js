@@ -83,12 +83,12 @@ const createAppointment = async (req, res) => {
     if (error) {
       // LOG THE ACTUAL ERROR TO YOUR SERVER CONSOLE
       console.error("Supabase Insert Error Details:", JSON.stringify(error, null, 2));
-      
+
       return res.status(400).json({
         success: false,
         message: error.message || 'Failed to create appointment',
         // Optional: Return strict details only in development
-        code: error.code, 
+        code: error.code,
         details: error.details
       });
     }
@@ -198,7 +198,7 @@ const getAppointments = async (req, res) => {
         .select('id')
         .eq('user_id', user.id)
         .single();
-      
+
       if (advisor) {
         query = query.eq('advisor_id', advisor.id);
       }
@@ -311,7 +311,7 @@ const getAppointmentById = async (req, res) => {
         .select('id')
         .eq('user_id', user.id)
         .single();
-      
+
       if (advisor && appointment.advisor_id !== advisor.id) {
         return res.status(403).json({
           success: false,
@@ -360,17 +360,33 @@ const approveAppointment = async (req, res) => {
     const { uid } = req.user;
 
     // Get advisor
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('firebase_uid', uid)
       .single();
 
-    const { data: advisor } = await supabase
+    if (userError || !user) {
+      console.error('User lookup failed in approveAppointment:', userError);
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found',
+      });
+    }
+
+    const { data: advisor, error: advisorError } = await supabase
       .from('advisors')
       .select('id')
       .eq('user_id', user.id)
       .single();
+
+    if (advisorError || !advisor) {
+      console.error('Advisor lookup failed in approveAppointment:', advisorError);
+      return res.status(404).json({
+        success: false,
+        message: 'Advisor profile not found. Please ensure your advisor profile is properly set up.',
+      });
+    }
 
     // Update appointment
     const { data: appointment, error } = await supabase
@@ -409,7 +425,7 @@ const approveAppointment = async (req, res) => {
           message: `Your appointment has been approved`,
           type: 'appointment_approved',
         });
-      
+
       if (notifError) {
         console.error('Failed to create notification:', notifError);
       } else {
@@ -446,17 +462,33 @@ const rejectAppointment = async (req, res) => {
     const { uid } = req.user;
 
     // Get advisor
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('firebase_uid', uid)
       .single();
 
-    const { data: advisor } = await supabase
+    if (userError || !user) {
+      console.error('User lookup failed in rejectAppointment:', userError);
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found',
+      });
+    }
+
+    const { data: advisor, error: advisorError } = await supabase
       .from('advisors')
       .select('id')
       .eq('user_id', user.id)
       .single();
+
+    if (advisorError || !advisor) {
+      console.error('Advisor lookup failed in rejectAppointment:', advisorError);
+      return res.status(404).json({
+        success: false,
+        message: 'Advisor profile not found. Please ensure your advisor profile is properly set up.',
+      });
+    }
 
     // Update appointment
     const { data: appointment, error } = await supabase
@@ -495,7 +527,7 @@ const rejectAppointment = async (req, res) => {
           message: reason || 'Your appointment has been rejected',
           type: 'appointment_rejected',
         });
-      
+
       if (notifError) {
         console.error('Failed to create notification:', notifError);
       } else {
