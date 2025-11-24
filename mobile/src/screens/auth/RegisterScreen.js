@@ -24,7 +24,7 @@ const RegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
 
- const handleRegister = async () => {
+  const handleRegister = async () => {
     console.log("🟢 1. Starting Registration...");
 
     // 1. Basic Validation
@@ -39,27 +39,27 @@ const RegisterScreen = ({ navigation }) => {
 
       // 2. The actual registration call
       const result = await register(formData);
-      
+
       console.log("🟢 3. Success!", result);
       Alert.alert("Success", "User registered! Check your database.");
-      
+
     } catch (error) {
       console.error("🔴 4. ERROR CAUGHT:", error);
 
       // DIAGNOSTIC ALERTS - This tells us exactly where it broke
       if (error.code === 'auth/email-already-in-use') {
         Alert.alert('Firebase Error', 'Email is already in use.');
-      } 
+      }
       else if (error.response) {
         // Server replied with an error (4xx, 5xx)
         console.log("Server Data:", error.response.data);
         Alert.alert('Server Error', `Status: ${error.response.status}\nMessage: ${JSON.stringify(error.response.data)}`);
-      } 
+      }
       else if (error.request) {
         // Server never replied (Network Issue)
         console.log("Network Error details:", error.request);
         Alert.alert('Connection Error', 'Could not reach 10.0.2.2:6000. \n\n1. Is the backend running?\n2. Did you restart the app (press r)?');
-      } 
+      }
       else {
         // Code logic error
         Alert.alert('App Error', error.message);
@@ -119,42 +119,14 @@ const RegisterScreen = ({ navigation }) => {
           autoCapitalize="none"
         />
 
-        <View style={styles.roleContainer}>
-          <Text style={styles.roleLabel}>Role:</Text>
-          <View style={styles.roleButtons}>
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                formData.role === 'student' && styles.roleButtonActive,
-              ]}
-              onPress={() => setFormData({ ...formData, role: 'student' })}
-            >
-              <Text
-                style={[
-                  styles.roleButtonText,
-                  formData.role === 'student' && styles.roleButtonTextActive,
-                ]}
-              >
-                Student
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                formData.role === 'advisor' && styles.roleButtonActive,
-              ]}
-              onPress={() => setFormData({ ...formData, role: 'advisor' })}
-            >
-              <Text
-                style={[
-                  styles.roleButtonText,
-                  formData.role === 'advisor' && styles.roleButtonTextActive,
-                ]}
-              >
-                Advisor
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Role is now fixed to 'student' - Teachers must be added via add-teacher.js script */}
+        <View style={styles.infoBox}>
+          <Text style={styles.infoText}>
+            📚 Registering as a Student
+          </Text>
+          <Text style={styles.infoSubtext}>
+            Teachers/Advisors are added by administrators only
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -210,38 +182,23 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  roleContainer: {
-    marginBottom: 15,
-  },
-  roleLabel: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#333',
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  roleButton: {
-    flex: 1,
+  infoBox: {
+    backgroundColor: '#E3F2FD',
     padding: 15,
-    borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
   },
-  roleButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  roleButtonText: {
+  infoText: {
     fontSize: 16,
-    color: '#333',
-  },
-  roleButtonTextActive: {
-    color: '#fff',
     fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  infoSubtext: {
+    fontSize: 13,
+    color: '#666',
   },
   button: {
     backgroundColor: '#007AFF',
