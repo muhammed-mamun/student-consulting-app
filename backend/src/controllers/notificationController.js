@@ -217,10 +217,58 @@ const deleteNotification = async (req, res) => {
   }
 };
 
+/**
+ * Register/Update push token
+ */
+const registerPushToken = async (req, res) => {
+  try {
+    const { uid } = req.user;
+    const { pushToken } = req.body;
+
+    if (!pushToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Push token is required',
+      });
+    }
+
+    // Update user's push token
+    const { data: user, error } = await supabase
+      .from('users')
+      .update({
+        push_token: pushToken,
+      })
+      .eq('firebase_uid', uid)
+      .select()
+      .single();
+
+    if (error || !user) {
+      return res.status(400).json({
+        success: false,
+        message: error?.message || 'Failed to register push token',
+      });
+    }
+
+    console.log(`✅ Push token registered for user ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Push token registered successfully',
+    });
+  } catch (error) {
+    console.error('Error registering push token:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to register push token',
+    });
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  registerPushToken,
 };
 

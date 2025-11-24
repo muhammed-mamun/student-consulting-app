@@ -1,4 +1,6 @@
 const supabase = require('../config/supabase');
+const { v4: uuidv4 } = require('uuid');
+const { sendPushNotification } = require('../services/pushNotificationService');
 
 /**
  * Create appointment
@@ -93,16 +95,17 @@ const createAppointment = async (req, res) => {
       });
     }
 
-    // 4. Create notification for advisor
+    // 4. Create notification for advisor and send push notification
     // We wrap this in a try/catch so it doesn't crash the response if notification fails
     try {
       const { data: advisorUser } = await supabase
         .from('advisors')
-        .select('user_id')
+        .select('user_id, users:user_id(push_token, email)')
         .eq('id', advisorId)
         .single();
 
       if (advisorUser) {
+        // Create in-app notification
         await supabase
           .from('notifications')
           .insert({
@@ -112,6 +115,19 @@ const createAppointment = async (req, res) => {
             message: `You have a new appointment request from ${appointment.students.first_name} ${appointment.students.last_name}`,
             type: 'appointment_request',
           });
+
+        // Send push notification if user has a push token
+        if (advisorUser.users?.push_token) {
+          await sendPushNotification(
+            advisorUser.users.push_token,
+            'New Appointment Request',
+            `${appointment.students.first_name} ${appointment.students.last_name} requested an appointment`,
+            {
+              type: 'appointment_request',
+              appointmentId: appointment.id,
+            }
+          );
+        }
       }
     } catch (notifyError) {
       console.error("Notification failed (non-fatal):", notifyError);
@@ -414,8 +430,16 @@ const approveAppointment = async (req, res) => {
       });
     }
 
-    // Create notification for student
+    // Create notification for student and send push
     try {
+      // Get student's push token
+      const { data: student } = await supabase
+        .from('users')
+        .select('push_token, email')
+        .eq('id', appointment.student_id)
+        .single();
+
+      // Create in-app notification
       const { error: notifError } = await supabase
         .from('notifications')
         .insert({
@@ -430,6 +454,19 @@ const approveAppointment = async (req, res) => {
         console.error('Failed to create notification:', notifError);
       } else {
         console.log('Notification created successfully for student:', appointment.student_id);
+      }
+
+      // Send push notification if student has a push token
+      if (student?.push_token) {
+        await sendPushNotification(
+          student.push_token,
+          'Appointment Approved ✅',
+          `Your appointment request has been approved`,
+          {
+            type: 'appointment_approved',
+            appointmentId: appointment.id,
+          }
+        );
       }
     } catch (notifError) {
       console.error('Error creating notification:', notifError);
@@ -516,8 +553,16 @@ const rejectAppointment = async (req, res) => {
       });
     }
 
-    // Create notification for student
+    // Create notification for student and send push
     try {
+      // Get student's push token
+      const { data: student } = await supabase
+        .from('users')
+        .select('push_token, email')
+        .eq('id', appointment.student_id)
+        .single();
+
+      // Create in-app notification
       const { error: notifError } = await supabase
         .from('notifications')
         .insert({
@@ -532,6 +577,19 @@ const rejectAppointment = async (req, res) => {
         console.error('Failed to create notification:', notifError);
       } else {
         console.log('Notification created successfully for student:', appointment.student_id);
+      }
+
+      // Send push notification if student has a push token
+      if (student?.push_token) {
+        await sendPushNotification(
+          student.push_token,
+          'Appointment Rejected ❌',
+          reason || 'Your appointment request was not approved',
+          {
+            type: 'appointment_rejected',
+            appointmentId: appointment.id,
+          }
+        );
       }
     } catch (notifError) {
       console.error('Error creating notification:', notifError);
